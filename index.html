@@ -382,6 +382,57 @@
     }
     .repo-meta span { color:var(--dim-green); }
 
+    /* GITHUB */
+    .gh-profile-link {
+      display:inline-block;font-family:'VT323',monospace;font-size:20px;
+      color:var(--black);background:var(--green);padding:4px 16px;
+      text-decoration:none;letter-spacing:2px;border:2px solid var(--green);
+      transition:all 0.1s;margin-bottom:16px;
+    }
+    .gh-profile-link:hover {
+      background:var(--black);color:var(--green);box-shadow:0 0 10px var(--green);
+    }
+    .gh-status { font-family:'VT323',monospace;font-size:18px;color:var(--dim-green);
+      text-align:center;padding:16px;letter-spacing:2px; }
+    .gh-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-top:12px; }
+    .gh-card {
+      border:1px solid var(--dim-green);padding:14px;transition:all 0.2s;
+      position:relative;overflow:hidden;background:rgba(0,255,65,0.01);
+    }
+    .gh-card::before {
+      content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;
+      background:linear-gradient(90deg,transparent,rgba(0,255,65,0.05),transparent);transition:left 0.4s;
+    }
+    .gh-card:hover::before { left:100%; }
+    .gh-card:hover { border-color:var(--green);box-shadow:0 0 15px rgba(0,255,65,0.2);background:rgba(0,255,65,0.05); }
+    .gh-card-name {
+      font-family:'VT323',monospace;font-size:20px;color:var(--cyan);
+      margin-bottom:4px;letter-spacing:1px;
+    }
+    .gh-card-name a { color:var(--cyan);text-decoration:none; }
+    .gh-card-name a:hover { color:var(--green);text-decoration:underline; }
+    .gh-card-desc { font-size:13px;color:var(--dim-green);line-height:1.5;margin-bottom:8px; }
+    .gh-card-meta { display:flex;gap:12px;flex-wrap:wrap;align-items:center;font-size:12px; }
+    .gh-lang {
+      font-family:'VT323',monospace;font-size:14px;padding:1px 7px;
+      color:var(--black);letter-spacing:1px;display:inline-block;
+    }
+    .gh-lang-python  { background:#3572A5;color:white; }
+    .gh-lang-shell   { background:#00aa2a; }
+    .gh-lang-bash    { background:#00aa2a; }
+    .gh-lang-javascript { background:#f1e05a;color:#111; }
+    .gh-lang-html    { background:#e34c26;color:white; }
+    .gh-lang-css     { background:#563d7c;color:white; }
+    .gh-lang-default { background:#666;color:white; }
+    .gh-stat { color:var(--dim-green);font-family:'VT323',monospace;font-size:15px; }
+    .gh-stat-star { color:var(--amber); }
+    .gh-stat-fork { color:var(--cyan); }
+    .gh-pinned-label {
+      font-family:'VT323',monospace;font-size:18px;color:var(--amber);
+      letter-spacing:2px;margin-bottom:8px;border-bottom:1px dashed var(--dark-green);
+      padding-bottom:6px;
+    }
+
     ::-webkit-scrollbar       { width:8px;background:var(--black); }
     ::-webkit-scrollbar-thumb { background:var(--dim-green); }
     ::-webkit-scrollbar-thumb:hover { background:var(--green); }
@@ -421,6 +472,7 @@
     <a href="#projects">[ PROJECTS ]</a>
     <a href="#music">[ MUSIC ]</a>
     <a href="#repo">[ REPO ]</a>
+    <a href="#github">[ GITHUB ]</a>
     <a href="#guestbook">[ GUESTBOOK ]</a>
   </nav>
 
@@ -551,6 +603,40 @@
         <input class="repo-search" id="repoSearch" type="text" placeholder="// SEARCH SCRIPTS..." />
       </div>
       <div class="repo-grid" id="repoGrid"></div>
+    </div>
+  </div>
+
+  <!-- GITHUB -->
+  <div class="section" id="github">
+    <div class="section-header">
+      <span>GITHUB.SH // SOURCE CONTROL</span>
+      <span class="win-controls">
+        <span class="win-btn minimize" data-target="github">_</span>
+        <span class="win-btn maximize" data-target="github">□</span>
+        <span class="win-btn close"    data-target="github">×</span>
+      </span>
+    </div>
+    <div class="section-body">
+      <a class="gh-profile-link" href="https://github.com/Kalifries" target="_blank" rel="noopener">[ VIEW FULL PROFILE ON GITHUB ↗ ]</a>
+
+      <!-- ── PINNED / FEATURED REPOS (manually curated) ── -->
+      <div class="gh-pinned-label">// PINNED REPOS</div>
+      <div class="gh-grid" id="ghPinned">
+        <div class="gh-card">
+          <div class="gh-card-name"><a href="https://github.com/Kalifries/transient-site" target="_blank" rel="noopener">transient-site</a></div>
+          <div class="gh-card-desc">The tran$ient personal website — retro terminal aesthetic, CRT effects, script repo, music player, guestbook. Raw HTML + vanilla JS.</div>
+          <div class="gh-card-meta">
+            <span class="gh-lang gh-lang-html">HTML</span>
+            <span class="gh-stat">Netlify</span>
+          </div>
+        </div>
+        <!-- ADD MORE PINNED REPOS HERE — copy the gh-card block above and edit -->
+      </div>
+
+      <!-- ── LIVE REPOS (pulled from GitHub API) ── -->
+      <div class="gh-pinned-label" style="margin-top:20px;">// PUBLIC REPOSITORIES</div>
+      <div class="gh-status" id="ghStatus">FETCHING REPOS<span class="blink">...</span></div>
+      <div class="gh-grid" id="ghGrid"></div>
     </div>
   </div>
 
@@ -1193,6 +1279,77 @@ function highlight(code, lang) {
       card.classList.toggle('hidden', !(matchLang && matchQuery));
     });
   }
+})();
+
+// ════════════════════════════════════════════════════════════════
+//  GITHUB — fetch public repos from the API
+// ════════════════════════════════════════════════════════════════
+(function(){
+  const grid   = document.getElementById('ghGrid');
+  const status = document.getElementById('ghStatus');
+  if (!grid || !status) return;
+
+  const GH_USER = 'Kalifries';
+  const API_URL = `https://api.github.com/users/${GH_USER}/repos?sort=updated&per_page=30`;
+
+  // Map GitHub language names to CSS classes
+  function langClass(lang) {
+    if (!lang) return 'gh-lang-default';
+    const key = lang.toLowerCase().replace(/[^a-z]/g,'');
+    return 'gh-lang-' + (['python','shell','bash','javascript','html','css'].includes(key) ? key : 'default');
+  }
+
+  // Relative time display
+  function timeAgo(dateStr) {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const mins  = Math.floor(diff / 60000);
+    const hours = Math.floor(mins / 60);
+    const days  = Math.floor(hours / 24);
+    if (days > 30) return Math.floor(days/30) + 'mo ago';
+    if (days > 0)  return days + 'd ago';
+    if (hours > 0) return hours + 'h ago';
+    return mins + 'm ago';
+  }
+
+  fetch(API_URL)
+    .then(r => {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    })
+    .then(repos => {
+      // Filter out forks unless you want them — remove the filter to include forks
+      const filtered = repos.filter(r => !r.fork);
+
+      if (filtered.length === 0) {
+        status.textContent = 'NO PUBLIC REPOS FOUND — PUSH SOME CODE, SOLDIER.';
+        return;
+      }
+
+      status.style.display = 'none';
+
+      filtered.forEach(repo => {
+        const card = document.createElement('div');
+        card.className = 'gh-card';
+
+        const stars = repo.stargazers_count > 0
+          ? `<span class="gh-stat gh-stat-star">★ ${repo.stargazers_count}</span>` : '';
+        const forks = repo.forks_count > 0
+          ? `<span class="gh-stat gh-stat-fork">⑂ ${repo.forks_count}</span>` : '';
+        const lang  = repo.language
+          ? `<span class="gh-lang ${langClass(repo.language)}">${repo.language.toUpperCase()}</span>` : '';
+
+        card.innerHTML =
+          `<div class="gh-card-name"><a href="${repo.html_url}" target="_blank" rel="noopener">${repo.name}</a></div>` +
+          `<div class="gh-card-desc">${repo.description || '<span style="color:var(--dark-green)">No description</span>'}</div>` +
+          `<div class="gh-card-meta">${lang}${stars}${forks}<span class="gh-stat">↻ ${timeAgo(repo.updated_at)}</span></div>`;
+
+        grid.appendChild(card);
+      });
+    })
+    .catch(err => {
+      status.innerHTML = 'COULD NOT REACH GITHUB API — ' + err.message +
+        '<br><span style="font-size:14px;color:var(--dark-green);">Try refreshing or check back later.</span>';
+    });
 })();
 
 //  Shows confirmation instantly, Netlify captures the data.
